@@ -1,0 +1,30 @@
+/* Basic styling for the page */
+body {
+    font-family: Arial, sans-serif; /* Font for all text */
+    margin: 40px; /* Space around the content */
+    background-color: #f3f3f3; /* Light gray background */
+}
+
+/* Main heading style */
+h1 {
+    color: #6a0dad; /* Purple color */
+}
+
+/* Style for inputs and button */
+input, button {
+    margin: 5px; /* Space between elements */
+    padding: 5px; /* Inner spacing */
+}
+
+/* Button specific styling */
+button {
+    background-color: #6a0dad; /* Purple background */
+    color: white; /* White text */
+    border: none; /* No border */
+    cursor: pointer; /* Cursor changes to pointer on hover */
+}
+
+/* Task list styling */
+ul {
+    margin-top: 20px; /* Space above the list */
+}
