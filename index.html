@@ -2,27 +2,35 @@
 <html>
 <head>
     <title>Smart Study Planner</title>
-    <!-- Link to external CSS file for styling -->
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-<!-- Main heading -->
-<h1>Smart Study Planner</h1>
+<div class="container">
+    <div style="text-align: right;">
+    <button id="themeToggle" class="toggle-btn" onclick="toggleDarkMode()">🌙 Dark Mode</button>
+</div>
 
-<!-- Input fields for adding a new task -->
-<input id="taskName" placeholder="Assignment name"> <!-- Task name -->
-<input id="dueDate" type="date"> <!-- Due date -->
-<input id="difficulty" type="number" min="1" max="5" placeholder="Difficulty 1-5"> <!-- Difficulty level -->
+    <h1>Smart Study Planner</h1>
 
-<!-- Button to add task, triggers addTask() function in script.js -->
-<button onclick="addTask()">Add Task</button>
+    <input id="taskName" placeholder="Assignment name">
+    <input id="dueDate" type="date">
+    <input id="difficulty" type="number" min="1" max="5" placeholder="Difficulty 1-5">
 
-<!-- Section where tasks will be displayed -->
-<h2>Tasks</h2>
-<ul id="taskList"></ul> <!-- Empty list initially -->
+    <button onclick="addTask()">Add Task</button>
 
-<!-- Link to external JS file containing the logic -->
+    <h2>Tasks</h2>
+    <progress id="progressBar" value="0" max="100"></progress>
+    <span id="progressText">0%</span>
+
+    <div class="task-count" id="taskCounter">0 / 0 Tasks Completed</div>
+
+    <ul id="taskList"></ul>
+
+</div>
+
 <script src="script.js"></script>
+
 </body>
 </html>

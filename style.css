@@ -1,30 +1,164 @@
-/* Basic styling for the page */
+/* ==========================================================
+   GLOBAL STYLES (Your Original Design)
+   ========================================================== */
+* {
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
 body {
-    font-family: Arial, sans-serif; /* Font for all text */
-    margin: 40px; /* Space around the content */
-    background-color: #f3f3f3; /* Light gray background */
+    background: #f4f6fb;
+    margin: 0;
+    padding: 40px;
+    display: flex;
+    justify-content: center;
+    transition: background 0.3s ease; /* Smooth transition when switching modes */
 }
 
-/* Main heading style */
+.container {
+    background: white;
+    padding: 30px;
+    border-radius: 16px;
+    width: 420px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.1);
+}
+
 h1 {
-    color: #6a0dad; /* Purple color */
+    text-align: center;
 }
 
-/* Style for inputs and button */
-input, button {
-    margin: 5px; /* Space between elements */
-    padding: 5px; /* Inner spacing */
+input, select, button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
 }
 
-/* Button specific styling */
 button {
-    background-color: #6a0dad; /* Purple background */
-    color: white; /* White text */
-    border: none; /* No border */
-    cursor: pointer; /* Cursor changes to pointer on hover */
+    background: #6366f1;
+    color: white;
+    border: none;
+    cursor: pointer;
+    margin-bottom: 15px;
 }
 
-/* Task list styling */
+button:hover {
+    background: #4f46e5;
+}
+
+progress {
+    width: 100%;
+    height: 18px;
+}
+
+.task-count {
+    text-align: center;
+    margin: 8px 0;
+    font-weight: bold;
+}
+
 ul {
-    margin-top: 20px; /* Space above the list */
+    list-style: none;
+    padding: 0;
+}
+
+/* ==========================================================
+   TASK ITEM STYLING
+   ========================================================== */
+
+li {
+    background: #f9fafb;
+    padding: 10px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between; 
+}
+
+.delete-btn {
+    width: auto;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding: 5px 12px;
+    background: #ef4444;
+    font-size: 12px;
+}
+
+.delete-btn:hover {
+    background: #dc2626;
+}
+
+.task-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* ==========================================================
+   DARK MODE STYLES (NEW)
+   ========================================================== */
+
+/* The .toggle-btn styling for the top right button */
+.toggle-btn {
+    width: auto;
+    margin-top: 0;
+    background: #e9ecef;
+    color: #333;
+    font-size: 12px;
+    padding: 5px 10px;
+}
+
+/* ==========================================================
+   DARK MODE STYLES (STRENGTHENED)
+   ========================================================== */
+
+/* 1. Force the background of the body to change */
+body.dark-mode {
+    background: #1a1b1e !important;
+    color: #ffffff !important;
+}
+
+/* 2. Force the container to change colors */
+body.dark-mode .container {
+    background: #25262b !important;
+    color: #ffffff !important;
+}
+
+/* 3. Style the headings and labels inside dark mode */
+body.dark-mode h1, 
+body.dark-mode h2, 
+body.dark-mode span, 
+body.dark-mode .task-count {
+    color: #ffffff !important;
+}
+
+/* 4. Style the task cards */
+body.dark-mode li {
+    background: #2c2e33 !important;
+    border: 1px solid #373a40 !important;
+}
+
+/* 5. FIX: Make sure input text is visible (White text on dark background) */
+body.dark-mode input {
+    background: #373a40 !important;
+    color: white !important;
+    border-color: #4a4d53 !important;
+}
+
+/* 6. Style the toggle button itself */
+.toggle-btn {
+    width: auto !important; /* Overrides the 100% width rule */
+    margin-top: 0 !important;
+    background: #e9ecef;
+    color: #333;
+    font-size: 12px;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+body.dark-mode .toggle-btn {
+    background: #373a40 !important;
+    color: #ffffff !important;
 }
