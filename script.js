@@ -6,19 +6,31 @@ let tasks = JSON.parse(localStorage.getItem("studyTasks")) || [];
 
 // Run these immediately on load
 renderTasks();
-initTheme(); // NEW: Initialize the dark/light theme
+window.addEventListener('DOMContentLoaded', setDefaultTime);
 
 function saveToLocalStorage() {
     localStorage.setItem("studyTasks", JSON.stringify(tasks));
 }
 
+// Helper to set the default time to 11:59 PM
+function setDefaultTime() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const defaultDateTime = `${year}-${month}-${day}T23:59`;
+    
+    const dateInput = document.getElementById("dueDate");
+    if (dateInput) dateInput.value = defaultDateTime;
+}
+
 /* ==========================================================
-   2. CORE ACTIONS (Add, Delete, Toggle)
+   2. CORE ACTIONS
    ========================================================== */
 
 function addTask() {
     const name = document.getElementById("taskName").value;
-    const due = document.getElementById("dueDate").value;
+    const due = document.getElementById("dueDate").value; 
     const diff = document.getElementById("difficulty").value;
 
     if (!name || !due || !diff) return alert("Fill all fields");
@@ -32,25 +44,44 @@ function addTask() {
 
     saveToLocalStorage();
     renderTasks(); 
+    
     document.getElementById("taskName").value = "";
+    setDefaultTime();
 }
 
 /* ==========================================================
-   3. RENDERING (Drawing the UI)
+   3. RENDERING & LOGIC
    ========================================================== */
+
+function getTimeRemaining(dateTimeString) {
+    const now = new Date();
+    const due = new Date(dateTimeString);
+    const diff = due - now;
+
+    if (diff <= 0) return "⚠️ Overdue!";
+    const mins = Math.floor(diff / (1000 * 60));
+    const hours = Math.floor(mins / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) return `⏳ ${days}d left`;
+    if (hours > 0) return `⏰ ${hours}h left`;
+    return `🔥 ${mins}m left!`;
+}
 
 function renderTasks() {
     const list = document.getElementById("taskList");
     list.innerHTML = "";
 
+    // Sort by due date
+    tasks.sort((a, b) => new Date(a.due) - new Date(b.due));
+
     tasks.forEach((task, index) => {
         const li = document.createElement("li");
 
-        // 1. Create a "Left Side" container for the Checkbox and the Text
         const leftSideGroup = document.createElement("div");
         leftSideGroup.style.display = "flex";
-        leftSideGroup.style.alignItems = "center"; // Note: changed from align_items to alignItems
-        leftSideGroup.style.gap = "8px";
+        leftSideGroup.style.alignItems = "center";
+        leftSideGroup.style.gap = "10px";
 
         const checkbox = document.createElement("input");
         checkbox.type = "checkbox";
@@ -58,18 +89,43 @@ function renderTasks() {
         checkbox.checked = task.completed;
         checkbox.onchange = () => {
             task.completed = checkbox.checked;
+            if (checkbox.checked) {
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+            }
             saveToLocalStorage();
             renderTasks();
         };
 
+        // Date Formatting
+        const dueDateObj = new Date(task.due);
+        const formattedDate = dueDateObj.toLocaleDateString([], { month: 'short', day: 'numeric' });
+        const formattedTime = dueDateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const timeLeft = getTimeRemaining(task.due);
+
+        // Difficulty Color Logic
+        let diffColor = "#10b981"; // Green
+        if (task.difficulty == 3) diffColor = "#f59e0b"; // Orange
+        if (task.difficulty >= 4) diffColor = "#ef4444"; // Red
+
         const span = document.createElement("span");
-        span.textContent = ` ${task.name} (Due ${task.due})`;
+        // Updated HTML structure for the vertical stack
+        span.innerHTML = `
+            <div style="display: flex; flex-direction: column; line-height: 1.4;">
+                <strong>${task.name}</strong>
+                <small style="color: #6b7280;">📅 ${formattedDate} @ ${formattedTime} (${timeLeft})</small>
+                <small style="font-weight: bold; color: ${diffColor};">Difficulty: ${task.difficulty}</small>
+            </div>
+        `;
+
         if (task.completed) span.style.textDecoration = "line-through";
 
         leftSideGroup.appendChild(checkbox);
         leftSideGroup.appendChild(span);
 
-        // 2. Create the "Right Side" button
         const del = document.createElement("button");
         del.textContent = "Remove";
         del.className = "delete-btn"; 
@@ -88,7 +144,7 @@ function renderTasks() {
 }
 
 /* ==========================================================
-   4. PROGRESS CALCULATION
+   4. PROGRESS & DARK MODE
    ========================================================== */
 
 function updateProgress() {
@@ -96,39 +152,32 @@ function updateProgress() {
     const total = tasks.length;
     const percent = total === 0 ? 0 : Math.round(completed / total * 100);
 
-    document.getElementById("progressBar").value = percent;
+    const fill = document.getElementById("progressBar");
+    if (fill) fill.style.width = percent + "%";
+
     document.getElementById("progressText").textContent = percent + "%";
-    document.getElementById("taskCounter").textContent =
-        `${completed} / ${total} Tasks Completed`;
+    document.getElementById("taskCounter").textContent = `${completed} / ${total} Tasks Completed`;
+
+    // 100% Celebration
+    if (percent === 100 && total > 0) {
+        confetti({ particleCount: 400, spread: 100, origin: { y: 0.6 } });
+    }
 }
 
-/* ==========================================================
-   5. DARK MODE TOGGLE LOGIC (REPAIRED)
-   ========================================================== */
-
-// 1. Check for saved theme preference as soon as the script loads
+// Dark Mode logic
 if (localStorage.getItem('theme') === 'dark') {
     document.body.classList.add('dark-mode');
-    // We have to wait a tiny bit for the HTML to load before changing button text
     window.onload = () => {
-        document.getElementById('themeToggle').textContent = "☀️ Light Mode";
+        const btn = document.getElementById('themeToggle');
+        if (btn) btn.textContent = "☀️ Light Mode";
     };
 }
 
-// 2. This function runs every time the button is clicked
 function toggleDarkMode() {
     const body = document.body;
     const btn = document.getElementById('themeToggle');
-
-    // Toggle the "dark-mode" class on the body
     body.classList.toggle('dark-mode');
-
-    // Check if the body now has the class and update text/storage
-    if (body.classList.contains('dark-mode')) {
-        btn.textContent = "☀️ Light Mode";
-        localStorage.setItem('theme', 'dark');
-    } else {
-        btn.textContent = "🌙 Dark Mode";
-        localStorage.setItem('theme', 'light');
-    }
+    const isDark = body.classList.contains('dark-mode');
+    btn.textContent = isDark ? "☀️ Light Mode" : "🌙 Dark Mode";
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
 }

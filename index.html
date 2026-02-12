@@ -15,20 +15,24 @@
     <h1>Smart Study Planner</h1>
 
     <input id="taskName" placeholder="Assignment name">
-    <input id="dueDate" type="date">
+    <input id="dueDate" type="datetime-local">
     <input id="difficulty" type="number" min="1" max="5" placeholder="Difficulty 1-5">
 
     <button onclick="addTask()">Add Task</button>
 
     <h2>Tasks</h2>
-    <progress id="progressBar" value="0" max="100"></progress>
-    <span id="progressText">0%</span>
+    <div class="progress-container">
+        <div id="progressBar" class="progress-bar-fill"></div>
+    </div>
+    <div id="progressText" class="progress-text">0%</div>
 
     <div class="task-count" id="taskCounter">0 / 0 Tasks Completed</div>
 
     <ul id="taskList"></ul>
 
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
 <script src="script.js"></script>
 
