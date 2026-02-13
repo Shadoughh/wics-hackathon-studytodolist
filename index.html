@@ -26,23 +26,25 @@
         <label for="difficulty">Priority / Difficulty (1-5)</label>
         <input id="difficulty" type="number" min="1" max="5" placeholder="Optional">
 
+        <button onclick="addTask()">Add Task</button>
+        <button onclick="clearAllTasks()" class="clear-btn">Clear All Tasks</button>
+    </div>
+
+    <hr class="section-divider">
+
+    <div id="activeTimerContainer" class="timer-card">
+        <h3 id="timerTaskName">Focusing on: Task Name</h3>
+        <div id="timerDisplay">25:00</div>
+        <button id="stopTimerBtn" onclick="stopTimer()">Stop Timer</button>
+    </div>
+
+    <div class="sort-container">
         <label for="sortOption">Display Order</label>
-        <select id="sortOption" onchange="renderTasks()" style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #ddd;">
+        <select id="sortOption" onchange="renderTasks()">
             <option value="due">Sort by: Due Date</option>
             <option value="diffHigh">Sort by: Hardest First</option>
             <option value="diffLow">Sort by: Easiest First</option>
         </select>
-
-        <button onclick="addTask()">Add Task</button>
-        <button onclick="clearAllTasks()" style="margin-top: 10px; transition: background 0.3s ease;">Clear All Tasks</button>
-    </div>
-
-    <hr style="margin: 25px 0; border: 0; border-top: 1px solid #eee;">
-
-    <div id="activeTimerContainer" style="display: none; text-align: center; background: #f1f5f9; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 2px solid #6366f1;">
-        <h3 id="timerTaskName" style="margin: 0; color: #1e293b; font-size: 1.1rem;">Focusing on: Task Name</h3>
-        <div id="timerDisplay" style="font-size: 3.5rem; font-weight: bold; color: #6366f1; margin: 10px 0; font-family: monospace;">25:00</div>
-        <button id="stopTimerBtn" onclick="stopTimer()" style="background: #ef4444; width: auto; padding: 8px 20px; font-size: 0.9rem;">Stop Timer</button>
     </div>
 
     <h2>Your Progress</h2>

@@ -124,19 +124,23 @@ function getTimeRemaining(dateTimeString) {
 
 function renderTasks() {
     const list = document.getElementById("taskList");
-    const clearBtn = document.querySelector("button[onclick='clearAllTasks()']");
+    const clearBtn = document.querySelector(".clear-btn");
     if (!list) return;
     list.innerHTML = "";
 
     // Toggle Clear All Button State
     if (tasks.length === 0) {
-        clearBtn.style.background = "#94a3b8"; 
-        clearBtn.style.cursor = "default";
-        clearBtn.style.opacity = "0.7";
+        if (clearBtn) {
+            clearBtn.style.background = "#94a3b8"; 
+            clearBtn.style.cursor = "default";
+            clearBtn.style.opacity = "0.7";
+        }
     } else {
-        clearBtn.style.background = "#6366f1"; 
-        clearBtn.style.cursor = "pointer";
-        clearBtn.style.opacity = "1";
+        if (clearBtn) {
+            clearBtn.style.background = "#6366f1"; 
+            clearBtn.style.cursor = "pointer";
+            clearBtn.style.opacity = "1";
+        }
     }
 
     // Sorting Logic
@@ -150,6 +154,7 @@ function renderTasks() {
 
     tasks.forEach((task, index) => {
         const li = document.createElement("li");
+        const timeLeft = getTimeRemaining(task.due); // Get time remaining for this specific task
 
         // --- LEFT COLUMN: Checkbox and Task Details ---
         const taskMain = document.createElement("div");
@@ -168,14 +173,15 @@ function renderTasks() {
         const infoStack = document.createElement("div");
         infoStack.className = "task-info";
 
-        const timeLeft = getTimeRemaining(task.due);
-        const diffColor = task.difficulty >= 4 ? '#ef4444' : (task.difficulty == 3 ? '#f59e0b' : '#10b981');
-        
+        // Define the color based on the difficulty level
+        const d = task.difficulty;
+        const diffColor = d >= 4 ? '#ef4444' : (d >= 3 ? '#f59e0b' : '#10b981');
+        const diffLabel = d ? `<small style="font-weight: bold; color: ${diffColor}; margin-top: 2px;">Difficulty: ${d}</small>` : "";
+
         infoStack.innerHTML = `
-            <strong style="${task.completed ? 'text-decoration: line-through; opacity: 0.6;' : ''}">${task.name}</strong>
-            <small>📅 ${new Date(task.due).toLocaleDateString()} @ ${new Date(task.due).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
-            <small style="font-weight: bold; color: ${timeLeft === '⚠️ Overdue!' ? '#ef4444' : '#6366f1'};">${timeLeft}</small>
-            ${task.difficulty ? `<small style="font-weight: bold; color: ${diffColor};">Difficulty: ${task.difficulty}</small>` : ""}
+            <strong style="${task.completed ? 'text-decoration: line-through; opacity: 0.5;' : ''}">${task.name}</strong>
+            <small>📅 ${new Date(task.due).toLocaleDateString()} • <span style="color: ${timeLeft.includes('⚠️') ? '#ef4444' : '#6366f1'}; font-weight:600;">${timeLeft}</span></small>
+            ${diffLabel}
         `;
 
         taskMain.appendChild(checkbox);
@@ -187,7 +193,6 @@ function renderTasks() {
 
         const focusBtn = document.createElement("button");
         focusBtn.textContent = "⏱️ Focus";
-        focusBtn.style.background = "#6366f1"; // Keep specific color, but let CSS handle sizing
         focusBtn.onclick = () => startTimer(task.name, 25);
 
         const editBtn = document.createElement("button");
@@ -217,7 +222,6 @@ function renderTasks() {
         btnGroup.appendChild(editBtn);
         btnGroup.appendChild(delBtn);
         
-        // Assemble Column 1 and Column 2 into the List Item
         li.appendChild(taskMain);
         li.appendChild(btnGroup);
         list.appendChild(li);
