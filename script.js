@@ -80,8 +80,8 @@ function startTimer(taskName, minutes = 25) {
     const display = document.getElementById("timerDisplay");
     const label = document.getElementById("timerTaskName");
     
-    container.style.display = "block";
-    label.textContent = "Focusing on: " + taskName;
+    if (container) container.style.display = "block";
+    if (label) label.textContent = "Focusing on: " + taskName;
     timerRunning = true;
 
     let seconds = minutes * 60;
@@ -89,23 +89,24 @@ function startTimer(taskName, minutes = 25) {
         seconds--;
         let mins = Math.floor(seconds / 60);
         let secs = seconds % 60;
-        display.textContent = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        if (display) display.textContent = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
 
         if (seconds <= 0) {
             clearInterval(countdown);
             timerRunning = false;
-            display.textContent = "Time's Up!";
+            if (display) display.textContent = "Time's Up!";
             confetti({ particleCount: 200, spread: 100 });
             alert("Break time! Great job on: " + taskName);
         }
     }, 1000);
-    container.scrollIntoView({ behavior: 'smooth' });
+    if (container) container.scrollIntoView({ behavior: 'smooth' });
 }
 
 function stopTimer() {
     clearInterval(countdown);
     timerRunning = false;
-    document.getElementById("activeTimerContainer").style.display = "none";
+    const container = document.getElementById("activeTimerContainer");
+    if (container) container.style.display = "none";
 }
 
 function getTimeRemaining(dateTimeString) {
@@ -127,7 +128,7 @@ function renderTasks() {
     if (!list) return;
     list.innerHTML = "";
 
-    // Clear All Button Style
+    // Toggle Clear All Button State
     if (tasks.length === 0) {
         clearBtn.style.background = "#94a3b8"; 
         clearBtn.style.cursor = "default";
@@ -138,6 +139,7 @@ function renderTasks() {
         clearBtn.style.opacity = "1";
     }
 
+    // Sorting Logic
     const sortValue = document.getElementById("sortOption") ? document.getElementById("sortOption").value : "due";
     tasks.sort((a, b) => {
         if (sortValue === "due") return new Date(a.due) - new Date(b.due);
@@ -148,10 +150,10 @@ function renderTasks() {
 
     tasks.forEach((task, index) => {
         const li = document.createElement("li");
-        const leftSideGroup = document.createElement("div");
-        leftSideGroup.style.display = "flex";
-        leftSideGroup.style.alignItems = "center";
-        leftSideGroup.style.gap = "10px";
+
+        // --- LEFT COLUMN: Checkbox and Task Details ---
+        const taskMain = document.createElement("div");
+        taskMain.className = "task-main";
 
         const checkbox = document.createElement("input");
         checkbox.type = "checkbox";
@@ -163,28 +165,34 @@ function renderTasks() {
             renderTasks();
         };
 
+        const infoStack = document.createElement("div");
+        infoStack.className = "task-info";
+
         const timeLeft = getTimeRemaining(task.due);
-        let difficultyHTML = task.difficulty ? `<small style="font-weight: bold; color: ${task.difficulty >= 4 ? '#ef4444' : (task.difficulty == 3 ? '#f59e0b' : '#10b981')};">Difficulty: ${task.difficulty}</small>` : "";
+        const diffColor = task.difficulty >= 4 ? '#ef4444' : (task.difficulty == 3 ? '#f59e0b' : '#10b981');
+        
+        infoStack.innerHTML = `
+            <strong style="${task.completed ? 'text-decoration: line-through; opacity: 0.6;' : ''}">${task.name}</strong>
+            <small>📅 ${new Date(task.due).toLocaleDateString()} @ ${new Date(task.due).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
+            <small style="font-weight: bold; color: ${timeLeft === '⚠️ Overdue!' ? '#ef4444' : '#6366f1'};">${timeLeft}</small>
+            ${task.difficulty ? `<small style="font-weight: bold; color: ${diffColor};">Difficulty: ${task.difficulty}</small>` : ""}
+        `;
 
-        const span = document.createElement("span");
-        span.innerHTML = `<div style="display:flex; flex-direction:column;"><strong>${task.name}</strong><small>${new Date(task.due).toLocaleDateString()} (${timeLeft})</small>${difficultyHTML}</div>`;
-        if (task.completed) span.style.textDecoration = "line-through";
+        taskMain.appendChild(checkbox);
+        taskMain.appendChild(infoStack);
 
-        leftSideGroup.appendChild(checkbox);
-        leftSideGroup.appendChild(span);
-
+        // --- RIGHT COLUMN: Action Buttons ---
         const btnGroup = document.createElement("div");
-        btnGroup.style.display = "flex";
-        btnGroup.style.gap = "5px";
+        btnGroup.className = "task-actions";
 
         const focusBtn = document.createElement("button");
         focusBtn.textContent = "⏱️ Focus";
-        focusBtn.style.cssText = "width:auto; margin:0; padding:5px 10px; background:#6366f1; font-size:12px;";
+        focusBtn.style.background = "#6366f1"; // Keep specific color, but let CSS handle sizing
         focusBtn.onclick = () => startTimer(task.name, 25);
 
         const editBtn = document.createElement("button");
         editBtn.textContent = "Edit";
-        editBtn.style.cssText = "width:auto; margin:0; padding:5px 10px; background:#f59e0b; font-size:12px;";
+        editBtn.style.background = "#f59e0b";
         editBtn.onclick = () => {
             document.getElementById("taskName").value = task.name;
             document.getElementById("dueDate").value = task.due;
@@ -196,16 +204,21 @@ function renderTasks() {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         };
 
-        const del = document.createElement("button");
-        del.textContent = "Remove";
-        del.className = "delete-btn";
-        del.style.cssText = "width:auto; margin:0;";
-        del.onclick = () => { tasks.splice(index, 1); saveToLocalStorage(); renderTasks(); };
+        const delBtn = document.createElement("button");
+        delBtn.textContent = "Remove";
+        delBtn.className = "delete-btn"; 
+        delBtn.onclick = () => { 
+            tasks.splice(index, 1); 
+            saveToLocalStorage(); 
+            renderTasks(); 
+        };
 
         btnGroup.appendChild(focusBtn);
         btnGroup.appendChild(editBtn);
-        btnGroup.appendChild(del);
-        li.appendChild(leftSideGroup);
+        btnGroup.appendChild(delBtn);
+        
+        // Assemble Column 1 and Column 2 into the List Item
+        li.appendChild(taskMain);
         li.appendChild(btnGroup);
         list.appendChild(li);
     });
@@ -216,14 +229,22 @@ function updateProgress() {
     const completed = tasks.filter(t => t.completed).length;
     const total = tasks.length;
     const percent = total === 0 ? 0 : Math.round(completed / total * 100);
-    document.getElementById("progressBar").style.width = percent + "%";
-    document.getElementById("progressText").textContent = percent + "%";
-    document.getElementById("taskCounter").textContent = `${completed} / ${total} Tasks Completed`;
-    if (percent === 100 && total > 0) confetti({ particleCount: 400, spread: 100, origin: { y: 0.6 } });
+    const bar = document.getElementById("progressBar");
+    const text = document.getElementById("progressText");
+    const counter = document.getElementById("taskCounter");
+    
+    if (bar) bar.style.width = percent + "%";
+    if (text) text.textContent = percent + "%";
+    if (counter) counter.textContent = `${completed} / ${total} Tasks Completed`;
+    
+    if (percent === 100 && total > 0) {
+        confetti({ particleCount: 400, spread: 100, origin: { y: 0.6 } });
+    }
 }
 
 function toggleDarkMode() {
     document.body.classList.toggle('dark-mode');
     const isDark = document.body.classList.contains('dark-mode');
-    document.getElementById('themeToggle').textContent = isDark ? "☀️ Light Mode" : "🌙 Dark Mode";
+    const toggleBtn = document.getElementById('themeToggle');
+    if (toggleBtn) toggleBtn.textContent = isDark ? "☀️ Light Mode" : "🌙 Dark Mode";
 }

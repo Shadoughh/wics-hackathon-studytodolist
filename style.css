@@ -1,15 +1,15 @@
 /* ==========================================================
-   GLOBAL STYLES
+   1. GLOBAL STYLES & CONTAINER
    ========================================================== */
 * {
     box-sizing: border-box;
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: 'Segoe UI', Roboto, Arial, sans-serif;
 }
 
 body {
     background: #f4f6fb;
     margin: 0;
-    padding: 40px;
+    padding: 20px; /* Reduced padding for mobile friendliness */
     display: flex;
     justify-content: center;
     transition: background 0.3s ease;
@@ -19,108 +19,138 @@ body {
     background: white;
     padding: 30px;
     border-radius: 16px;
-    width: 420px;
+    width: 480px; /* Increased width to prevent button wrapping */
+    max-width: 100%; 
     box-shadow: 0 10px 30px rgba(0,0,0,.1);
 }
 
 h1 {
     text-align: center;
-    margin-bottom: 25px; /* Added space under title */
+    margin-bottom: 25px;
+    color: #1f2937;
 }
 
 /* ==========================================================
-   FORM & SPACING LOGIC (The "Clean" Update)
+   2. FORM INPUTS & LABELS
    ========================================================== */
-
-/* 1. Style the Labels */
 label {
     display: block;
     font-weight: bold;
     font-size: 14px;
-    margin-top: 20px;   /* Space ABOVE the label */
-    margin-bottom: 8px; /* Space BELOW the label (before input) */
+    margin-top: 18px;
+    margin-bottom: 8px;
     color: #374151;
 }
 
-/* 2. Style Inputs & Selects */
 input, select {
     width: 100%;
-    padding: 12px;      /* Slightly thicker for modern look */
+    padding: 12px;
     border-radius: 8px;
-    border: 1px solid #ccc;
+    border: 1px solid #d1d5db;
     background: #fff;
-    margin-bottom: 5px; /* Small buffer */
+    font-size: 14px;
+    transition: border-color 0.2s;
 }
 
-/* 3. Style Buttons */
+/* ==========================================================
+   3. BUTTON STYLES (Main Actions)
+   ========================================================== */
 button {
     width: 100%;
     padding: 12px;
-    margin-top: 25px;   /* Significant gap before action buttons */
+    margin-top: 20px;
     border-radius: 8px;
     border: none;
     background: #6366f1;
     color: white;
     font-weight: bold;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: transform 0.1s, background 0.2s;
 }
 
-button:hover {
-    background: #4f46e5;
-}
+button:hover { background: #4f46e5; }
 
-/* Specific styling for the Clear All button to distinguish it */
-button[onclick="clearAllTasks()"] {
-    background: #94a3b8;
-    margin-top: 10px;    /* Tighter gap between the two main buttons */
-}
-
-button[onclick="clearAllTasks()"]:hover {
-    background: #64748b;
+.toggle-btn {
+    width: auto !important;
+    margin: 0 !important;
+    padding: 6px 12px;
+    background: #f3f4f6;
+    color: #374151;
+    font-size: 12px;
+    float: right; /* Keeps theme toggle in the corner */
 }
 
 /* ==========================================================
-   TASK ITEM STYLING
+   4. TASK ITEM UI (THE ROW FIX)
    ========================================================== */
-
 ul {
     list-style: none;
     padding: 0;
-    margin-top: 20px;
+    margin-top: 25px;
 }
 
 li {
-    background: #f9fafb;
-    min-height: 85px;
-    padding: 15px;
+    background: #ffffff;
+    padding: 14px;
     border-radius: 12px;
     margin-bottom: 12px;
+    display: flex;             /* Core Layout */
+    flex-direction: row;       /* Force Horizontal */
+    justify-content: space-between; 
+    align-items: center;       /* Vertical Center */
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+/* Left Section: Checkbox + Info */
+.task-main {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border: 1px solid #edf2f7;
+    gap: 12px;
+    flex: 1;                   /* Grow to fill space */
+    align-items: center; 
+    min-width: 0;              /* Prevents text from pushing buttons off */
 }
 
-.delete-btn {
-    width: auto;
-    margin: 0;
-    padding: 6px 12px;
-    background: #ef4444;
-    font-size: 12px;
+.task-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    overflow: hidden;          /* Prevents overflow */
 }
 
-.delete-btn:hover {
-    background: #dc2626;
+.task-info strong {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;   /* Add ... if name is too long */
 }
+
+/* Right Section: Buttons */
+.task-actions {
+    display: flex;
+    gap: 5px;                  /* Tighter gap to save space */
+    flex-shrink: 0;            /* MANDATORY: Do not shrink buttons */
+    margin-left: 10px;
+}
+
+/* List Button Overrides */
+.task-actions button {
+    width: auto;               /* Buttons only as wide as text */
+    margin: 0;                 /* Remove the 20px top margin */
+    padding: 6px 10px;
+    font-size: 11px;
+    white-space: nowrap;       /* Keep "Save Changes" on 1 line */
+    border-radius: 6px;
+}
+
+.delete-btn { background: #ef4444; }
+.delete-btn:hover { background: #dc2626; }
 
 /* ==========================================================
-   PROGRESS BAR
+   5. PROGRESS & DARK MODE
    ========================================================== */
-
 .progress-container {
     width: 100%;
-    height: 16px;
+    height: 14px;
     background-color: #e5e7eb;
     border-radius: 10px;
     overflow: hidden;
@@ -131,40 +161,15 @@ li {
     width: 0%;
     height: 100%;
     background: #6366f1;
-    transition: width 0.5s ease-in-out; 
-}
-
-.progress-text {
-    text-align: center;
-    font-size: 14px;
-    margin-top: 8px;
-    font-weight: bold;
-    color: #4f46e5;
-}
-
-.task-count {
-    text-align: center;
-    margin: 10px 0;
-    font-size: 14px;
-    color: #4b5563;
+    transition: width 0.5s ease; 
 }
 
 /* ==========================================================
-   DARK MODE STYLES
+   6. DARK MODE OVERRIDES (Title visibility fix)
    ========================================================== */
-
-.toggle-btn {
-    width: auto !important;
-    margin: 0 !important;
-    padding: 6px 12px;
-    background: #f3f4f6;
-    color: #374151;
-    font-size: 12px;
-}
-
 body.dark-mode {
     background: #111827 !important;
-    color: #ffffff !important;
+    color: #f9fafb !important;
 }
 
 body.dark-mode .container {
@@ -172,8 +177,11 @@ body.dark-mode .container {
     border: 1px solid #374151;
 }
 
-body.dark-mode label {
-    color: #d1d5db;
+/* This line ensures your title is visible! */
+body.dark-mode h1, 
+body.dark-mode label,
+body.dark-mode h2 {
+    color: #ffffff !important; 
 }
 
 body.dark-mode input, 
@@ -184,12 +192,13 @@ body.dark-mode select {
 }
 
 body.dark-mode li {
-    background: #374151 !important;
-    border-color: #4b5563 !important;
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+    box-shadow: none;
 }
 
 body.dark-mode .progress-container {
-    background-color: #4b5563;
+    background-color: #374151;
 }
 
 body.dark-mode .task-count, 
