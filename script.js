@@ -2,9 +2,8 @@
    1. DATA INITIALIZATION & SETUP
    ========================================================== */
 let tasks = JSON.parse(localStorage.getItem("studyTasks")) || [];
-let editIndex = null; // Tracks if we are currently editing a task
+let editIndex = null; 
 
-// Run these functions immediately when the script loads
 renderTasks();
 window.addEventListener('DOMContentLoaded', setDefaultTime);
 
@@ -45,13 +44,11 @@ function addTask() {
     };
 
     if (editIndex !== null) {
-        // UPDATE EXISTING TASK
         tasks[editIndex] = taskData;
         editIndex = null;
         mainBtn.textContent = "Add Task";
-        mainBtn.style.background = ""; // Resets to CSS default
+        mainBtn.style.background = ""; 
     } else {
-        // ADD NEW TASK
         tasks.push(taskData);
     }
 
@@ -64,10 +61,10 @@ function addTask() {
 }
 
 function clearAllTasks() {
-    if (tasks.length === 0) return alert("Your list is already empty!");
+    if (tasks.length === 0) return; // Silent return if empty
     if (confirm("Are you sure you want to delete ALL tasks? This cannot be undone.")) {
         tasks = [];
-        editIndex = null; // Reset edit mode if active
+        editIndex = null;
         const mainBtn = document.querySelector("button[onclick='addTask()']");
         mainBtn.textContent = "Add Task";
         saveToLocalStorage();
@@ -96,8 +93,20 @@ function getTimeRemaining(dateTimeString) {
 
 function renderTasks() {
     const list = document.getElementById("taskList");
+    const clearBtn = document.querySelector("button[onclick='clearAllTasks()']");
     if (!list) return;
     list.innerHTML = "";
+
+    // DYNAMIC UI: Clear All Button Styling
+    if (tasks.length === 0) {
+        clearBtn.style.background = "#94a3b8"; // Muted Grey
+        clearBtn.style.cursor = "default";
+        clearBtn.style.opacity = "0.7";
+    } else {
+        clearBtn.style.background = "#6366f1"; // Action Purple
+        clearBtn.style.cursor = "pointer";
+        clearBtn.style.opacity = "1";
+    }
 
     // SORTING LOGIC
     const sortValue = document.getElementById("sortOption") ? document.getElementById("sortOption").value : "due";
@@ -111,7 +120,6 @@ function renderTasks() {
     tasks.forEach((task, index) => {
         const li = document.createElement("li");
 
-        // --- Left Side Group (Checkbox + Text) ---
         const leftSideGroup = document.createElement("div");
         leftSideGroup.style.display = "flex";
         leftSideGroup.style.alignItems = "center";
@@ -156,7 +164,6 @@ function renderTasks() {
         leftSideGroup.appendChild(checkbox);
         leftSideGroup.appendChild(span);
 
-        // --- Right Side (Buttons Group) ---
         const btnGroup = document.createElement("div"); 
         btnGroup.style.display = "flex"; 
         btnGroup.style.gap = "5px";

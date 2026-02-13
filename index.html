@@ -17,27 +17,36 @@
     <h1>Smart Study Planner</h1>
 
     <div class="input-group">
-        <label for="taskName">Task Name</label>
-        <input id="taskName" placeholder="e.g., Study for Math Exam">
+        
+        <div class="field-group">
+            <label for="taskName">Task Name</label>
+            <input id="taskName" placeholder="e.g., Study for Math Exam">
+        </div>
 
-        <label for="dueDate">Due Date & Time</label>
-        <input id="dueDate" type="datetime-local">
+        <div class="field-group">
+            <label for="dueDate">Due Date & Time</label>
+            <input id="dueDate" type="datetime-local">
+        </div>
 
-        <label for="difficulty">Priority / Difficulty (1-5)</label>
-        <input id="difficulty" type="number" min="1" max="5" placeholder="Optional">
+        <div class="field-group">
+            <label for="difficulty">Priority / Difficulty (1-5)</label>
+            <input id="difficulty" type="number" min="1" max="5" placeholder="Optional">
+        </div>
 
-        <label for="sortOption">Display Order</label>
-        <select id="sortOption" onchange="renderTasks()" style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #ddd;">
-            <option value="due">Sort by: Due Date</option>
-            <option value="diffHigh">Sort by: Hardest First</option>
-            <option value="diffLow">Sort by: Easiest First</option>
-        </select>
+        <div class="field-group">
+            <label for="sortOption">Display Order</label>
+            <select id="sortOption" onchange="renderTasks()">
+                <option value="due">Sort by: Due Date</option>
+                <option value="diffHigh">Sort by: Hardest First</option>
+                <option value="diffLow">Sort by: Easiest First</option>
+            </select>
+        </div>
 
-        <button onclick="addTask()">Add Task</button>
-        <button onclick="clearAllTasks()" style="background: #94a3b8; margin-top: 10px;">Clear All Tasks</button>
+        <button onclick="addTask()" class="add-btn">Add Task</button>
+        <button onclick="clearAllTasks()" class="clear-btn">Clear All Tasks</button>
     </div>
 
-    <hr style="margin: 25px 0; border: 0; border-top: 1px solid #eee;">
+    <hr style="margin: 30px 0; border: 0; border-top: 1px solid #eee;">
 
     <h2>Your Progress</h2>
     <div class="progress-container">
