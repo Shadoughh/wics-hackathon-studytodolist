@@ -40,7 +40,8 @@ function addTask() {
         name: nameInput.value,
         due: dueInput.value,
         difficulty: diffInput.value ? parseInt(diffInput.value) : null,
-        completed: editIndex !== null ? tasks[editIndex].completed : false
+        completed: editIndex !== null ? tasks[editIndex].completed : false,
+        completedDate: editIndex !== null ? tasks[editIndex].completedDate : null
     };
 
     if (editIndex !== null) {
@@ -128,7 +129,6 @@ function renderTasks() {
     if (!list) return;
     list.innerHTML = "";
 
-    // Toggle Clear All Button State
     if (tasks.length === 0) {
         if (clearBtn) {
             clearBtn.style.background = "#94a3b8"; 
@@ -143,7 +143,6 @@ function renderTasks() {
         }
     }
 
-    // Sorting Logic
     const sortValue = document.getElementById("sortOption") ? document.getElementById("sortOption").value : "due";
     tasks.sort((a, b) => {
         if (sortValue === "due") return new Date(a.due) - new Date(b.due);
@@ -154,9 +153,8 @@ function renderTasks() {
 
     tasks.forEach((task, index) => {
         const li = document.createElement("li");
-        const timeLeft = getTimeRemaining(task.due); // Get time remaining for this specific task
+        const timeLeft = getTimeRemaining(task.due);
 
-        // --- LEFT COLUMN: Checkbox and Task Details ---
         const taskMain = document.createElement("div");
         taskMain.className = "task-main";
 
@@ -165,6 +163,9 @@ function renderTasks() {
         checkbox.checked = task.completed;
         checkbox.onchange = () => {
             task.completed = checkbox.checked;
+            // Record completion date for "Done Today" tracking
+            task.completedDate = checkbox.checked ? new Date().toISOString().split('T')[0] : null;
+            
             if (checkbox.checked) confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
             saveToLocalStorage();
             renderTasks();
@@ -173,7 +174,6 @@ function renderTasks() {
         const infoStack = document.createElement("div");
         infoStack.className = "task-info";
 
-        // Define the color based on the difficulty level
         const d = task.difficulty;
         const diffColor = d >= 4 ? '#ef4444' : (d >= 3 ? '#f59e0b' : '#10b981');
         const diffLabel = d ? `<small style="font-weight: bold; color: ${diffColor}; margin-top: 2px;">Difficulty: ${d}</small>` : "";
@@ -187,7 +187,6 @@ function renderTasks() {
         taskMain.appendChild(checkbox);
         taskMain.appendChild(infoStack);
 
-        // --- RIGHT COLUMN: Action Buttons ---
         const btnGroup = document.createElement("div");
         btnGroup.className = "task-actions";
 
@@ -229,19 +228,46 @@ function renderTasks() {
     updateProgress();
 }
 
+/* ==========================================================
+   4. PROGRESS & STATISTICS LOGIC
+   ========================================================== */
+
 function updateProgress() {
-    const completed = tasks.filter(t => t.completed).length;
-    const total = tasks.length;
-    const percent = total === 0 ? 0 : Math.round(completed / total * 100);
+    const todayStr = new Date().toISOString().split('T')[0];
+    const completedTasks = tasks.filter(t => t.completed);
+    const completedCount = completedTasks.length;
+    const totalCount = tasks.length;
+    
+    // Calculate Percent
+    const percent = totalCount === 0 ? 0 : Math.round(completedCount / totalCount * 100);
+    
+    // Count tasks finished specifically today
+    const finishedToday = tasks.filter(t => t.completed && t.completedDate === todayStr).length;
+    
+    // Calculate Overdue
+    const overdueCount = tasks.filter(t => {
+        return !t.completed && new Date(t.due) < new Date();
+    }).length;
+
+    // Update UI Elements
     const bar = document.getElementById("progressBar");
     const text = document.getElementById("progressText");
     const counter = document.getElementById("taskCounter");
     
+    // Update Stats Cards
+    if (document.getElementById("statsToday")) document.getElementById("statsToday").textContent = finishedToday;
+    if (document.getElementById("statsTotal")) document.getElementById("statsTotal").textContent = completedCount;
+    if (document.getElementById("statsOverdue")) {
+        const ovElement = document.getElementById("statsOverdue");
+        ovElement.textContent = overdueCount;
+        ovElement.style.color = overdueCount > 0 ? "#ef4444" : "#6366f1";
+    }
+
     if (bar) bar.style.width = percent + "%";
     if (text) text.textContent = percent + "%";
-    if (counter) counter.textContent = `${completed} / ${total} Tasks Completed`;
+    if (counter) counter.textContent = `${completedCount} / ${totalCount} Tasks Completed`;
     
-    if (percent === 100 && total > 0) {
+    if (percent === 100 && totalCount > 0) {
         confetti({ particleCount: 400, spread: 100, origin: { y: 0.6 } });
     }
 }
@@ -251,4 +277,78 @@ function toggleDarkMode() {
     const isDark = document.body.classList.contains('dark-mode');
     const toggleBtn = document.getElementById('themeToggle');
     if (toggleBtn) toggleBtn.textContent = isDark ? "☀️ Light Mode" : "🌙 Dark Mode";
+}
+function toggleStatsModal() {
+    const modal = document.getElementById("statsModal");
+    if (modal.style.display === "block") {
+        modal.style.display = "none";
+    } else {
+        updateDetailedStats();
+        modal.style.display = "block";
+    }
+}
+
+function updateDetailedStats() {
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const completed = tasks.filter(t => t.completed);
+    
+    // 1. All Time Done
+    document.getElementById("totalAllTime").textContent = completed.length;
+    
+    // 2. Finished Today
+    const today = completed.filter(t => t.completedDate === todayStr).length;
+    document.getElementById("todayCount").textContent = today;
+    
+    // 3. Finished This Week (Last 7 Days)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(now.getDate() - 7);
+    
+    const weekTasks = completed.filter(t => {
+        const compDate = new Date(t.completedDate);
+        return compDate >= sevenDaysAgo;
+    }).length;
+    document.getElementById("weekCount").textContent = weekTasks;
+    
+    // 4. % Completed On Time
+    // Logic: Of the completed tasks, how many were finished on or before the due date?
+    const onTimeTasks = completed.filter(t => {
+        const compDate = new Date(t.completedDate);
+        const dueDate = new Date(t.due);
+        return compDate <= dueDate;
+    }).length;
+
+    const onTimePercent = completed.length === 0 
+        ? 0 
+        : Math.round((onTimeTasks / completed.length) * 100);
+        
+    const scoreElement = document.getElementById("onTimeScore");
+    scoreElement.textContent = onTimePercent + "%";
+    
+    // Optional: Color code the percentage
+    scoreElement.style.color = onTimePercent >= 80 ? "#10b981" : (onTimePercent >= 50 ? "#f59e0b" : "#ef4444");
+}
+
+// Close modal if user clicks outside of the box
+window.onclick = function(event) {
+    const modal = document.getElementById("statsModal");
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
+}
+
+function resetStats() {
+    if (confirm("This will clear your 'All-Time', 'Weekly', and 'Today' progress. Your tasks will remain, but will be marked as incomplete. Proceed?")) {
+        
+        tasks.forEach(task => {
+            task.completed = false;
+            task.completedDate = null;
+        });
+
+        saveToLocalStorage();
+        renderTasks(); // This will refresh the main list
+        updateDetailedStats(); // This will refresh the numbers in the modal
+        
+        alert("Stats have been reset to a fresh slate!");
+    }
 }

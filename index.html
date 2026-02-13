@@ -32,7 +32,7 @@
 
     <hr class="section-divider">
 
-    <div id="activeTimerContainer" class="timer-card">
+    <div id="activeTimerContainer" class="timer-card" style="display: none;">
         <h3 id="timerTaskName">Focusing on: Task Name</h3>
         <div id="timerDisplay">25:00</div>
         <button id="stopTimerBtn" onclick="stopTimer()">Stop Timer</button>
@@ -47,6 +47,21 @@
         </select>
     </div>
 
+    <div class="stats-dashboard">
+        <div class="stat-card">
+            <span class="stat-value" id="statsToday">0</span>
+            <span class="stat-label">Done Today</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-value" id="statsTotal">0</span>
+            <span class="stat-label">Total Done</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-value" id="statsOverdue">0</span>
+            <span class="stat-label">Overdue</span>
+        </div>
+    </div>
+
     <h2>Your Progress</h2>
     <div class="progress-container">
         <div id="progressBar" class="progress-bar-fill"></div>
@@ -56,7 +71,37 @@
     <div class="task-count" id="taskCounter">0 / 0 Tasks Completed</div>
 
     <ul id="taskList"></ul>
+</div>
 
+<button id="statsFab" onclick="toggleStatsModal()">📊</button>
+
+<div id="statsModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="toggleStatsModal()">&times;</span>
+        <h2>Your Learning Insights</h2>
+        <hr class="section-divider">
+        
+        <div class="stats-grid">
+            <div class="stat-item">
+                <span class="stat-val" id="totalAllTime">0</span>
+                <span class="stat-lbl">All-Time Done</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-val" id="weekCount">0</span>
+                <span class="stat-lbl">Finished This Week</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-val" id="todayCount">0</span>
+                <span class="stat-lbl">Finished Today</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-val" id="onTimeScore">0%</span>
+                <span class="stat-lbl">% Completed On Time</span>
+            </div>
+        </div>
+
+        <button class="reset-stats-btn" onclick="resetStats()">Reset All Stats</button>
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
