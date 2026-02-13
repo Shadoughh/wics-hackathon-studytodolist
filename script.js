@@ -1,10 +1,10 @@
 /* ==========================================================
-   1. DATA INITIALIZATION
+   1. DATA INITIALIZATION & SETUP
    ========================================================== */
-
 let tasks = JSON.parse(localStorage.getItem("studyTasks")) || [];
+let editIndex = null; // Tracks if we are currently editing a task
 
-// Run these immediately on load
+// Run these functions immediately when the script loads
 renderTasks();
 window.addEventListener('DOMContentLoaded', setDefaultTime);
 
@@ -12,7 +12,6 @@ function saveToLocalStorage() {
     localStorage.setItem("studyTasks", JSON.stringify(tasks));
 }
 
-// Helper to set the default time to 11:59 PM
 function setDefaultTime() {
     const now = new Date();
     const year = now.getFullYear();
@@ -21,32 +20,59 @@ function setDefaultTime() {
     const defaultDateTime = `${year}-${month}-${day}T23:59`;
     
     const dateInput = document.getElementById("dueDate");
-    if (dateInput) dateInput.value = defaultDateTime;
+    if (dateInput) {
+        dateInput.value = defaultDateTime;
+    }
 }
 
 /* ==========================================================
-   2. CORE ACTIONS
+   2. CORE ACTIONS (Add, Edit, Clear All)
    ========================================================== */
 
 function addTask() {
-    const name = document.getElementById("taskName").value;
-    const due = document.getElementById("dueDate").value; 
-    const diff = document.getElementById("difficulty").value;
+    const nameInput = document.getElementById("taskName");
+    const dueInput = document.getElementById("dueDate");
+    const diffInput = document.getElementById("difficulty");
+    const mainBtn = document.querySelector("button[onclick='addTask()']");
 
-    if (!name || !due || !diff) return alert("Fill all fields");
+    if (!nameInput.value || !dueInput.value) return alert("Please enter a Task Name and Due Date!");
 
-    tasks.push({
-        name: name,
-        due: due,
-        difficulty: diff,
-        completed: false
-    });
+    const taskData = {
+        name: nameInput.value,
+        due: dueInput.value,
+        difficulty: diffInput.value ? parseInt(diffInput.value) : null,
+        completed: editIndex !== null ? tasks[editIndex].completed : false
+    };
+
+    if (editIndex !== null) {
+        // UPDATE EXISTING TASK
+        tasks[editIndex] = taskData;
+        editIndex = null;
+        mainBtn.textContent = "Add Task";
+        mainBtn.style.background = ""; // Resets to CSS default
+    } else {
+        // ADD NEW TASK
+        tasks.push(taskData);
+    }
 
     saveToLocalStorage();
     renderTasks(); 
     
-    document.getElementById("taskName").value = "";
+    nameInput.value = "";
+    diffInput.value = "";
     setDefaultTime();
+}
+
+function clearAllTasks() {
+    if (tasks.length === 0) return alert("Your list is already empty!");
+    if (confirm("Are you sure you want to delete ALL tasks? This cannot be undone.")) {
+        tasks = [];
+        editIndex = null; // Reset edit mode if active
+        const mainBtn = document.querySelector("button[onclick='addTask()']");
+        mainBtn.textContent = "Add Task";
+        saveToLocalStorage();
+        renderTasks();
+    }
 }
 
 /* ==========================================================
@@ -70,14 +96,22 @@ function getTimeRemaining(dateTimeString) {
 
 function renderTasks() {
     const list = document.getElementById("taskList");
+    if (!list) return;
     list.innerHTML = "";
 
-    // Sort by due date
-    tasks.sort((a, b) => new Date(a.due) - new Date(b.due));
+    // SORTING LOGIC
+    const sortValue = document.getElementById("sortOption") ? document.getElementById("sortOption").value : "due";
+    tasks.sort((a, b) => {
+        if (sortValue === "due") return new Date(a.due) - new Date(b.due);
+        if (sortValue === "diffHigh") return (b.difficulty || 0) - (a.difficulty || 0);
+        if (sortValue === "diffLow") return (a.difficulty || 0) - (b.difficulty || 0);
+        return 0;
+    });
 
     tasks.forEach((task, index) => {
         const li = document.createElement("li");
 
+        // --- Left Side Group (Checkbox + Text) ---
         const leftSideGroup = document.createElement("div");
         leftSideGroup.style.display = "flex";
         leftSideGroup.style.alignItems = "center";
@@ -90,53 +124,78 @@ function renderTasks() {
         checkbox.onchange = () => {
             task.completed = checkbox.checked;
             if (checkbox.checked) {
-                confetti({
-                    particleCount: 100,
-                    spread: 70,
-                    origin: { y: 0.6 }
-                });
+                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
             }
             saveToLocalStorage();
             renderTasks();
         };
 
-        // Date Formatting
         const dueDateObj = new Date(task.due);
         const formattedDate = dueDateObj.toLocaleDateString([], { month: 'short', day: 'numeric' });
         const formattedTime = dueDateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const timeLeft = getTimeRemaining(task.due);
 
-        // Difficulty Color Logic
-        let diffColor = "#10b981"; // Green
-        if (task.difficulty == 3) diffColor = "#f59e0b"; // Orange
-        if (task.difficulty >= 4) diffColor = "#ef4444"; // Red
+        let difficultyHTML = ""; 
+        if (task.difficulty) {
+            let diffColor = "#10b981"; 
+            if (task.difficulty == 3) diffColor = "#f59e0b"; 
+            if (task.difficulty >= 4) diffColor = "#ef4444"; 
+            difficultyHTML = `<small style="font-weight: bold; color: ${diffColor};">Difficulty: ${task.difficulty}</small>`;
+        }
 
         const span = document.createElement("span");
-        // Updated HTML structure for the vertical stack
         span.innerHTML = `
             <div style="display: flex; flex-direction: column; line-height: 1.4;">
                 <strong>${task.name}</strong>
-                <small style="color: #6b7280;">📅 ${formattedDate} @ ${formattedTime} (${timeLeft})</small>
-                <small style="font-weight: bold; color: ${diffColor};">Difficulty: ${task.difficulty}</small>
+                <small style="color: #6b7280;">📅 ${formattedDate} at ${formattedTime} (${timeLeft})</small>
+                ${difficultyHTML} 
             </div>
         `;
-
         if (task.completed) span.style.textDecoration = "line-through";
 
         leftSideGroup.appendChild(checkbox);
         leftSideGroup.appendChild(span);
 
+        // --- Right Side (Buttons Group) ---
+        const btnGroup = document.createElement("div"); 
+        btnGroup.style.display = "flex"; 
+        btnGroup.style.gap = "5px";
+
+        const editBtn = document.createElement("button");
+        editBtn.textContent = "Edit";
+        editBtn.style.width = "auto";
+        editBtn.style.margin = "0";
+        editBtn.style.padding = "5px 10px";
+        editBtn.style.background = "#f59e0b"; 
+        editBtn.style.fontSize = "12px";
+        editBtn.onclick = () => {
+            document.getElementById("taskName").value = task.name;
+            document.getElementById("dueDate").value = task.due;
+            document.getElementById("difficulty").value = task.difficulty || "";
+            
+            editIndex = index; 
+            const mainBtn = document.querySelector("button[onclick='addTask()']");
+            mainBtn.textContent = "Save Changes";
+            mainBtn.style.background = "#f59e0b";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
         const del = document.createElement("button");
         del.textContent = "Remove";
         del.className = "delete-btn"; 
+        del.style.width = "auto";
+        del.style.margin = "0";
         del.onclick = () => {
             tasks.splice(index, 1);
             saveToLocalStorage();
             renderTasks();
         };
 
+        btnGroup.appendChild(editBtn);
+        btnGroup.appendChild(del);
+
         li.appendChild(leftSideGroup);
-        li.appendChild(del);
+        li.appendChild(btnGroup);
         list.appendChild(li);
     });
 
@@ -144,7 +203,7 @@ function renderTasks() {
 }
 
 /* ==========================================================
-   4. PROGRESS & DARK MODE
+   4. PROGRESS & CELEBRATION
    ========================================================== */
 
 function updateProgress() {
@@ -155,22 +214,23 @@ function updateProgress() {
     const fill = document.getElementById("progressBar");
     if (fill) fill.style.width = percent + "%";
 
-    document.getElementById("progressText").textContent = percent + "%";
-    document.getElementById("taskCounter").textContent = `${completed} / ${total} Tasks Completed`;
+    const text = document.getElementById("progressText");
+    if (text) text.textContent = percent + "%";
+    
+    const counter = document.getElementById("taskCounter");
+    if (counter) counter.textContent = `${completed} / ${total} Tasks Completed`;
 
-    // 100% Celebration
     if (percent === 100 && total > 0) {
         confetti({ particleCount: 400, spread: 100, origin: { y: 0.6 } });
     }
 }
 
-// Dark Mode logic
+/* ==========================================================
+   5. DARK MODE TOGGLE LOGIC
+   ========================================================== */
+
 if (localStorage.getItem('theme') === 'dark') {
     document.body.classList.add('dark-mode');
-    window.onload = () => {
-        const btn = document.getElementById('themeToggle');
-        if (btn) btn.textContent = "☀️ Light Mode";
-    };
 }
 
 function toggleDarkMode() {
@@ -178,6 +238,6 @@ function toggleDarkMode() {
     const btn = document.getElementById('themeToggle');
     body.classList.toggle('dark-mode');
     const isDark = body.classList.contains('dark-mode');
-    btn.textContent = isDark ? "☀️ Light Mode" : "🌙 Dark Mode";
+    if (btn) btn.textContent = isDark ? "☀️ Light Mode" : "🌙 Dark Mode";
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
 }

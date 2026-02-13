@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Study Planner</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -9,18 +11,35 @@
 
 <div class="container">
     <div style="text-align: right;">
-    <button id="themeToggle" class="toggle-btn" onclick="toggleDarkMode()">🌙 Dark Mode</button>
-</div>
+        <button id="themeToggle" class="toggle-btn" onclick="toggleDarkMode()">🌙 Dark Mode</button>
+    </div>
 
     <h1>Smart Study Planner</h1>
 
-    <input id="taskName" placeholder="Assignment name">
-    <input id="dueDate" type="datetime-local">
-    <input id="difficulty" type="number" min="1" max="5" placeholder="Difficulty 1-5">
+    <div class="input-group">
+        <label for="taskName">Task Name</label>
+        <input id="taskName" placeholder="e.g., Study for Math Exam">
 
-    <button onclick="addTask()">Add Task</button>
+        <label for="dueDate">Due Date & Time</label>
+        <input id="dueDate" type="datetime-local">
 
-    <h2>Tasks</h2>
+        <label for="difficulty">Priority / Difficulty (1-5)</label>
+        <input id="difficulty" type="number" min="1" max="5" placeholder="Optional">
+
+        <label for="sortOption">Display Order</label>
+        <select id="sortOption" onchange="renderTasks()" style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #ddd;">
+            <option value="due">Sort by: Due Date</option>
+            <option value="diffHigh">Sort by: Hardest First</option>
+            <option value="diffLow">Sort by: Easiest First</option>
+        </select>
+
+        <button onclick="addTask()">Add Task</button>
+        <button onclick="clearAllTasks()" style="background: #94a3b8; margin-top: 10px;">Clear All Tasks</button>
+    </div>
+
+    <hr style="margin: 25px 0; border: 0; border-top: 1px solid #eee;">
+
+    <h2>Your Progress</h2>
     <div class="progress-container">
         <div id="progressBar" class="progress-bar-fill"></div>
     </div>
@@ -33,7 +52,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-
 <script src="script.js"></script>
 
 </body>

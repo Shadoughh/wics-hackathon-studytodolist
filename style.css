@@ -218,3 +218,15 @@ li {
 body.dark-mode small {
     color: #a1a1aa !important;
 }
+
+body.dark-mode select {
+    background: #373a40 !important;
+    color: white !important;
+    border-color: #4a4d53 !important;
+}
+
+/* This makes the text inside the dropdown readable in dark mode */
+body.dark-mode select option {
+    background: #2c2e33;
+    color: white;
+}
