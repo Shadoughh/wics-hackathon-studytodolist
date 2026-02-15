@@ -34,8 +34,18 @@
 
     <div id="activeTimerContainer" class="timer-card" style="display: none;">
         <h3 id="timerTaskName">Focusing on: Task Name</h3>
+        
+        <div id="timerSettings" style="margin-bottom: 10px;">
+            <label style="display:inline; font-size: 12px;">Set Minutes:</label>
+            <input type="number" id="customMinutes" value="25" min="1" max="180" style="width: 60px; padding: 5px; margin-left: 5px; display: inline-block;">
+        </div>
+
         <div id="timerDisplay">25:00</div>
-        <button id="stopTimerBtn" onclick="stopTimer()">Stop Timer</button>
+        
+        <div style="display: flex; justify-content: center; gap: 10px; margin-top: 15px;">
+            <button id="startPauseBtn" onclick="togglePause()" style="width: auto; padding: 8px 20px; background: #f59e0b;">Pause</button>
+            <button id="stopTimerBtn" onclick="stopTimer()" style="width: auto; padding: 8px 20px; background: #ef4444;">Stop</button>
+        </div>
     </div>
 
     <div class="sort-container">
@@ -96,7 +106,7 @@
             </div>
             <div class="stat-item">
                 <span class="stat-val" id="onTimeScore">0%</span>
-                <span class="stat-lbl">% Completed On Time</span>
+                <span class="stat-lbl">% On Time</span>
             </div>
         </div>
 
