@@ -1,113 +1,127 @@
-/* ==========================================================
-   1. DATA & STATE
-   ========================================================== */
 let tasks = JSON.parse(localStorage.getItem("studyTasks")) || [];
-let editIndex = null; 
-let countdown; 
+let editIndex = null;
+let countdown;
 let timerRunning = false;
 let timeLeftInSeconds = 0;
 let isPaused = false;
+let currentFocusTask = "";
+
+// Time picker state
+let setupMins = 25;
+let setupSecs = 0;
 
 renderTasks();
-window.addEventListener('DOMContentLoaded', setDefaultTime);
-
-function saveToLocalStorage() {
-    localStorage.setItem("studyTasks", JSON.stringify(tasks));
-}
-
-function setDefaultTime() {
-    const now = new Date();
-    const defaultDateTime = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}T23:59`;
-    const dateInput = document.getElementById("dueDate");
-    if (dateInput) dateInput.value = defaultDateTime;
-}
-
-/* ==========================================================
-   2. CORE ACTIONS
-   ========================================================== */
 
 function addTask() {
     const nameInput = document.getElementById("taskName");
     const dueInput = document.getElementById("dueDate");
     const diffInput = document.getElementById("difficulty");
-    const mainBtn = document.querySelector("button[onclick='addTask()']");
-
-    if (!nameInput.value || !dueInput.value) return alert("Please enter Name and Due Date!");
+    if (!nameInput.value || !dueInput.value) return alert("Fill in Name and Date!");
 
     const taskData = {
         name: nameInput.value,
         due: dueInput.value,
-        difficulty: diffInput.value ? parseInt(diffInput.value) : null,
-        completed: editIndex !== null ? tasks[editIndex].completed : false,
-        completedDate: editIndex !== null ? tasks[editIndex].completedDate : null
+        difficulty: diffInput.value || 1,
+        completed: editIndex !== null ? tasks[editIndex].completed : false
     };
 
     if (editIndex !== null) {
         tasks[editIndex] = taskData;
         editIndex = null;
-        mainBtn.textContent = "Add Task";
-        mainBtn.style.background = ""; 
+        document.getElementById("addBtn").textContent = "Add Task";
     } else {
         tasks.push(taskData);
     }
-
-    saveToLocalStorage();
-    renderTasks(); 
-    nameInput.value = "";
-    diffInput.value = "";
-    setDefaultTime();
+    saveAndRender();
+    nameInput.value = ""; dueInput.value = ""; diffInput.value = "";
 }
 
-function clearAllTasks() {
-    if (tasks.length === 0) return;
-    if (confirm("Are you sure you want to delete ALL tasks?")) {
-        tasks = [];
-        editIndex = null;
-        saveToLocalStorage();
-        renderTasks();
+function renderTasks() {
+    const list = document.getElementById("taskList");
+    const sort = document.getElementById("sortOption").value;
+    
+    if (sort === "due") tasks.sort((a,b) => new Date(a.due) - new Date(b.due));
+    else if (sort === "diffHigh") tasks.sort((a,b) => b.difficulty - a.difficulty);
+    else if (sort === "diffLow") tasks.sort((a,b) => a.difficulty - b.difficulty);
+
+    list.innerHTML = "";
+    let overdueCount = 0;
+
+    tasks.forEach((task, i) => {
+        const isOverdue = new Date(task.due) < new Date() && !task.completed;
+        if (isOverdue) overdueCount++;
+
+        const li = document.createElement("li");
+        li.className = "task-item";
+        li.innerHTML = `
+            <div class="task-main">
+                <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask(${i})">
+                <div class="task-info">
+                    <strong style="${task.completed ? 'text-decoration:line-through;opacity:0.5' : ''}">${task.name}</strong>
+                    <small>📅 ${new Date(task.due).toLocaleString()}</small>
+                    ${isOverdue ? '<span class="overdue-tag">⚠️ Overdue!</span>' : ''}
+                    <span class="difficulty-tag">Difficulty: ${task.difficulty}</span>
+                </div>
+            </div>
+            <div class="task-actions">
+                <button class="timer-btn" onclick="startTimer('${task.name.replace(/'/g, "\\'")}')">⏱️ Timer</button>
+                <button class="edit-btn" onclick="editTask(${i})">Edit</button>
+                <button class="del-btn" onclick="deleteTask(${i})">Remove</button>
+            </div>
+        `;
+        list.appendChild(li);
+    });
+    document.getElementById("statsOverdue").textContent = overdueCount;
+    updateProgress();
+}
+
+function adjustTime(type, amount) {
+    if (type === 'min') {
+        setupMins = Math.max(0, Math.min(99, setupMins + amount));
+        document.getElementById("setupMinutes").textContent = setupMins;
+    } else {
+        // Keeps seconds between 0-59
+        setupSecs = (setupSecs + amount + 60) % 60;
+        document.getElementById("setupSeconds").textContent = setupSecs < 10 ? '0' + setupSecs : setupSecs;
     }
 }
 
-/* ==========================================================
-   3. CUSTOM TIMER LOGIC
-   ========================================================== */
-
-function startTimer(taskName) {
-    if (timerRunning) return alert("A timer is already running!");
-
-    const container = document.getElementById("activeTimerContainer");
-    const label = document.getElementById("timerTaskName");
-    const customMinInput = document.getElementById("customMinutes");
-    const settingsDiv = document.getElementById("timerSettings");
-    const startPauseBtn = document.getElementById("startPauseBtn");
-
-    let minutes = parseInt(customMinInput.value) || 25;
-    timeLeftInSeconds = minutes * 60;
-    isPaused = false;
-    timerRunning = true;
-    
-    container.style.display = "block";
-    settingsDiv.style.display = "none"; 
-    label.textContent = "Focusing on: " + taskName;
-    startPauseBtn.textContent = "Pause";
-    startPauseBtn.style.background = "#f59e0b"; 
-
-    updateTimerDisplay();
-    runTick();
-    container.scrollIntoView({ behavior: 'smooth' });
+function editTask(index) {
+    editIndex = index;
+    const task = tasks[index];
+    document.getElementById("taskName").value = task.name;
+    document.getElementById("dueDate").value = task.due;
+    document.getElementById("difficulty").value = task.difficulty;
+    document.getElementById("addBtn").textContent = "Update Task";
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function runTick() {
+function startTimer(taskName) {
+    if (timerRunning) return alert("Timer is already running!");
+    currentFocusTask = taskName;
+    document.getElementById("setupTaskName").textContent = "Timer: " + taskName;
+    document.getElementById("timerSetup").style.display = "block";
+}
+
+function confirmAndStart() {
+    timeLeftInSeconds = (setupMins * 60) + setupSecs;
+    if (timeLeftInSeconds <= 0) return alert("Please set a time!");
+    
+    timerRunning = true;
+    isPaused = false;
+    document.getElementById("timerSetup").style.display = "none";
+    document.getElementById("activeTimerContainer").style.display = "block";
+    document.getElementById("timerTaskName").innerHTML = `Focusing on: <span style="color:var(--primary)">${currentFocusTask}</span>`;
+    
+    clearInterval(countdown);
+    updateTimerDisplay();
     countdown = setInterval(() => {
         if (!isPaused) {
             timeLeftInSeconds--;
             updateTimerDisplay();
-
             if (timeLeftInSeconds <= 0) {
                 clearInterval(countdown);
-                timerRunning = false;
-                confetti({ particleCount: 200, spread: 100 });
-                alert("Time's Up! Great focus session.");
+                confetti();
                 stopTimer();
             }
         }
@@ -115,15 +129,14 @@ function runTick() {
 }
 
 function updateTimerDisplay() {
-    const display = document.getElementById("timerDisplay");
-    let mins = Math.floor(timeLeftInSeconds / 60);
-    let secs = timeLeftInSeconds % 60;
-    display.textContent = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    const m = Math.floor(timeLeftInSeconds / 60);
+    const s = timeLeftInSeconds % 60;
+    document.getElementById("timerDisplay").textContent = `${m}:${s < 10 ? '0' : ''}${s}`;
 }
 
 function togglePause() {
-    const btn = document.getElementById("startPauseBtn");
     isPaused = !isPaused;
+    const btn = document.getElementById("startPauseBtn");
     btn.textContent = isPaused ? "Resume" : "Pause";
     btn.style.background = isPaused ? "#10b981" : "#f59e0b";
 }
@@ -131,153 +144,23 @@ function togglePause() {
 function stopTimer() {
     clearInterval(countdown);
     timerRunning = false;
-    isPaused = false;
     document.getElementById("activeTimerContainer").style.display = "none";
-    document.getElementById("timerSettings").style.display = "block";
+    document.getElementById("timerSetup").style.display = "none";
 }
 
-/* ==========================================================
-   4. RENDERING & STATS
-   ========================================================== */
-
-function getTimeRemaining(dateTimeString) {
-    const now = new Date();
-    const due = new Date(dateTimeString);
-    const diff = due - now;
-    if (diff <= 0) return "⚠️ Overdue!";
-    const mins = Math.floor(diff / (1000 * 60));
-    const hours = Math.floor(mins / 60);
-    const days = Math.floor(hours / 24);
-    if (days > 0) return `⏳ ${days}d left`;
-    if (hours > 0) return `⏰ ${hours}h left`;
-    return `🔥 ${mins}m left!`;
-}
-
-function renderTasks() {
-    const list = document.getElementById("taskList");
-    const clearBtn = document.querySelector(".clear-btn");
-    if (!list) return;
-    list.innerHTML = "";
-
-    // Dynamic Clear Button Styling
-    if (clearBtn) {
-        clearBtn.style.background = tasks.length === 0 ? "#94a3b8" : "#6366f1";
-        clearBtn.style.cursor = tasks.length === 0 ? "default" : "pointer";
-        clearBtn.style.opacity = tasks.length === 0 ? "0.7" : "1";
-    }
-
-    const sortValue = document.getElementById("sortOption")?.value || "due";
-    tasks.sort((a, b) => {
-        if (sortValue === "due") return new Date(a.due) - new Date(b.due);
-        if (sortValue === "diffHigh") return (b.difficulty || 0) - (a.difficulty || 0);
-        if (sortValue === "diffLow") return (a.difficulty || 0) - (b.difficulty || 0);
-        return 0;
-    });
-
-    tasks.forEach((task, index) => {
-        const li = document.createElement("li");
-        const timeLeft = getTimeRemaining(task.due);
-        const d = task.difficulty;
-        const diffColor = d >= 4 ? '#ef4444' : (d >= 3 ? '#f59e0b' : '#10b981');
-
-        li.innerHTML = `
-            <div class="task-main">
-                <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask(${index})">
-                <div class="task-info">
-                    <strong style="${task.completed ? 'text-decoration: line-through; opacity: 0.5;' : ''}">${task.name}</strong>
-                    <small>📅 ${new Date(task.due).toLocaleDateString()} • <span style="color: ${timeLeft.includes('⚠️') ? '#ef4444' : '#6366f1'}; font-weight:600;">${timeLeft}</span></small>
-                    ${d ? `<small style="font-weight: bold; color: ${diffColor};">Difficulty: ${d}</small>` : ""}
-                </div>
-            </div>
-            <div class="task-actions">
-                <button onclick="startTimer('${task.name.replace(/'/g, "\\'")}')">⏱️ Focus</button>
-                <button style="background: #f59e0b;" onclick="editTask(${index})">Edit</button>
-                <button class="delete-btn" onclick="deleteTask(${index})">Remove</button>
-            </div>
-        `;
-        list.appendChild(li);
-    });
-    updateProgress();
-}
-
-function toggleTask(index) {
-    tasks[index].completed = !tasks[index].completed;
-    tasks[index].completedDate = tasks[index].completed ? new Date().toISOString().split('T')[0] : null;
-    if (tasks[index].completed) confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-    saveToLocalStorage();
-    renderTasks();
-}
-
-function deleteTask(index) {
-    tasks.splice(index, 1);
-    saveToLocalStorage();
-    renderTasks();
-}
-
-function editTask(index) {
-    const task = tasks[index];
-    document.getElementById("taskName").value = task.name;
-    document.getElementById("dueDate").value = task.due;
-    document.getElementById("difficulty").value = task.difficulty || "";
-    editIndex = index;
-    const mainBtn = document.querySelector("button[onclick='addTask()']");
-    mainBtn.textContent = "Save Changes";
-    mainBtn.style.background = "#f59e0b";
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
+function toggleTask(i) { tasks[i].completed = !tasks[i].completed; saveAndRender(); }
+function deleteTask(i) { tasks.splice(i, 1); saveAndRender(); }
+function saveAndRender() { localStorage.setItem("studyTasks", JSON.stringify(tasks)); renderTasks(); }
 
 function updateProgress() {
-    const todayStr = new Date().toISOString().split('T')[0];
-    const completed = tasks.filter(t => t.completed);
-    const total = tasks.length;
-    const percent = total === 0 ? 0 : Math.round(completed.length / total * 100);
-    
-    document.getElementById("statsToday").textContent = tasks.filter(t => t.completed && t.completedDate === todayStr).length;
-    document.getElementById("statsTotal").textContent = completed.length;
-    document.getElementById("statsOverdue").textContent = tasks.filter(t => !t.completed && new Date(t.due) < new Date()).length;
-
+    const done = tasks.filter(t => t.completed).length;
+    const percent = tasks.length ? Math.round((done / tasks.length) * 100) : 0;
     document.getElementById("progressBar").style.width = percent + "%";
     document.getElementById("progressText").textContent = percent + "%";
-    document.getElementById("taskCounter").textContent = `${completed.length} / ${total} Tasks Completed`;
+    document.getElementById("statsToday").textContent = done;
+    document.getElementById("statsTotal").textContent = done;
+    document.getElementById("taskCounter").textContent = `${done} / ${tasks.length} Tasks Completed`;
 }
 
-/* ==========================================================
-   5. MODAL & THEME
-   ========================================================== */
-
-function toggleDarkMode() {
-    document.body.classList.toggle('dark-mode');
-    document.getElementById('themeToggle').textContent = document.body.classList.contains('dark-mode') ? "☀️ Light Mode" : "🌙 Dark Mode";
-}
-
-function toggleStatsModal() {
-    const modal = document.getElementById("statsModal");
-    if (modal.style.display === "block") {
-        modal.style.display = "none";
-    } else {
-        updateDetailedStats();
-        modal.style.display = "block";
-    }
-}
-
-function updateDetailedStats() {
-    const todayStr = new Date().toISOString().split('T')[0];
-    const completed = tasks.filter(t => t.completed);
-    document.getElementById("totalAllTime").textContent = completed.length;
-    document.getElementById("todayCount").textContent = completed.filter(t => t.completedDate === todayStr).length;
-    
-    const onTimeTasks = completed.filter(t => new Date(t.completedDate) <= new Date(t.due)).length;
-    const onTimePercent = completed.length === 0 ? 0 : Math.round((onTimeTasks / completed.length) * 100);
-    document.getElementById("onTimeScore").textContent = onTimePercent + "%";
-}
-
-function resetStats() {
-    if (confirm("Reset all progress? Tasks stay, but completion history is wiped.")) {
-        tasks.forEach(t => { t.completed = false; t.completedDate = null; });
-        saveToLocalStorage();
-        renderTasks();
-        updateDetailedStats();
-    }
-}
-
-window.onclick = (e) => { if (e.target == document.getElementById("statsModal")) document.getElementById("statsModal").style.display = "none"; }
+function toggleDarkMode() { document.body.classList.toggle('dark-mode'); }
+function clearAllTasks() { if(confirm("Clear all?")) { tasks = []; saveAndRender(); } }

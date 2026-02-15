@@ -4,52 +4,76 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Study Planner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
 <div class="container">
-    <div style="text-align: right;">
+    <div class="header-actions">
         <button id="themeToggle" class="toggle-btn" onclick="toggleDarkMode()">🌙 Dark Mode</button>
     </div>
 
     <h1>Smart Study Planner</h1>
 
     <div class="input-group">
-        <label for="taskName">Task Name</label>
+        <label>Task Name</label>
         <input id="taskName" placeholder="e.g., Study for Math Exam">
 
-        <label for="dueDate">Due Date & Time</label>
+        <label>Due Date & Time</label>
         <input id="dueDate" type="datetime-local">
 
-        <label for="difficulty">Priority / Difficulty (1-5)</label>
+        <label>Priority / Difficulty (1-5)</label>
         <input id="difficulty" type="number" min="1" max="5" placeholder="Optional">
 
-        <button onclick="addTask()">Add Task</button>
-        <button onclick="clearAllTasks()" class="clear-btn">Clear All Tasks</button>
+        <button id="addBtn" class="primary-btn" onclick="addTask()">Add Task</button>
+        <button class="clear-btn" onclick="clearAllTasks()">Clear All Tasks</button>
     </div>
 
     <hr class="section-divider">
 
-    <div id="activeTimerContainer" class="timer-card" style="display: none;">
-        <h3 id="timerTaskName">Focusing on: Task Name</h3>
-        
-        <div id="timerSettings" style="margin-bottom: 10px;">
-            <label style="display:inline; font-size: 12px;">Set Minutes:</label>
-            <input type="number" id="customMinutes" value="25" min="1" max="180" style="width: 60px; padding: 5px; margin-left: 5px; display: inline-block;">
+    <div id="timerSetup" class="timer-card" style="display: none;">
+        <h3 id="setupTaskName">Set Timer</h3>
+        <div class="timer-picker">
+            <div class="picker-group">
+                <button class="arrow-btn" onclick="adjustTime('min', 1)">▲</button>
+                <div id="setupMinutes" class="big-number">25</div>
+                <button class="arrow-btn" onclick="adjustTime('min', -1)">▼</button>
+                <span class="picker-label">MINS</span>
+            </div>
+            
+            <div class="picker-separator">:</div>
+            
+            <div class="picker-group">
+                <div class="dual-arrows">
+                    <button class="small-arrow" onclick="adjustTime('sec', 10)" title="+10s">▲</button>
+                    <button class="small-arrow" onclick="adjustTime('sec', 1)" title="+1s">▲</button>
+                </div>
+                <div id="setupSeconds" class="big-number">00</div>
+                <div class="dual-arrows">
+                    <button class="small-arrow" onclick="adjustTime('sec', -10)" title="-10s">▼</button>
+                    <button class="small-arrow" onclick="adjustTime('sec', -1)" title="-1s">▼</button>
+                </div>
+                <span class="picker-label">SECS</span>
+            </div>
         </div>
+        <div class="timer-actions">
+            <button class="primary-btn" onclick="confirmAndStart()">Start Timer</button>
+            <button class="clear-btn" onclick="stopTimer()" style="background:#cbd5e1; color:#475569; margin:0;">Cancel</button>
+        </div>
+    </div>
 
+    <div id="activeTimerContainer" class="timer-card" style="display: none;">
+        <h3 id="timerTaskName">Focusing...</h3>
         <div id="timerDisplay">25:00</div>
-        
-        <div style="display: flex; justify-content: center; gap: 10px; margin-top: 15px;">
-            <button id="startPauseBtn" onclick="togglePause()" style="width: auto; padding: 8px 20px; background: #f59e0b;">Pause</button>
-            <button id="stopTimerBtn" onclick="stopTimer()" style="width: auto; padding: 8px 20px; background: #ef4444;">Stop</button>
+        <div class="timer-actions">
+            <button id="startPauseBtn" onclick="togglePause()" class="pause-btn">Pause</button>
+            <button onclick="stopTimer()" class="stop-btn">Stop</button>
         </div>
     </div>
 
     <div class="sort-container">
-        <label for="sortOption">Display Order</label>
+        <label>Display Order</label>
         <select id="sortOption" onchange="renderTasks()">
             <option value="due">Sort by: Due Date</option>
             <option value="diffHigh">Sort by: Hardest First</option>
@@ -60,62 +84,29 @@
     <div class="stats-dashboard">
         <div class="stat-card">
             <span class="stat-value" id="statsToday">0</span>
-            <span class="stat-label">Done Today</span>
+            <span class="stat-label">DONE TODAY</span>
         </div>
         <div class="stat-card">
             <span class="stat-value" id="statsTotal">0</span>
-            <span class="stat-label">Total Done</span>
+            <span class="stat-label">TOTAL DONE</span>
         </div>
         <div class="stat-card">
             <span class="stat-value" id="statsOverdue">0</span>
-            <span class="stat-label">Overdue</span>
+            <span class="stat-label">OVERDUE</span>
         </div>
     </div>
 
-    <h2>Your Progress</h2>
+    <h2 class="section-title">Your Progress</h2>
     <div class="progress-container">
         <div id="progressBar" class="progress-bar-fill"></div>
     </div>
     <div id="progressText" class="progress-text">0%</div>
-
-    <div class="task-count" id="taskCounter">0 / 0 Tasks Completed</div>
+    <div id="taskCounter" class="task-count-sub">0 / 0 Tasks Completed</div>
 
     <ul id="taskList"></ul>
 </div>
 
-<button id="statsFab" onclick="toggleStatsModal()">📊</button>
-
-<div id="statsModal" class="modal">
-    <div class="modal-content">
-        <span class="close-modal" onclick="toggleStatsModal()">&times;</span>
-        <h2>Your Learning Insights</h2>
-        <hr class="section-divider">
-        
-        <div class="stats-grid">
-            <div class="stat-item">
-                <span class="stat-val" id="totalAllTime">0</span>
-                <span class="stat-lbl">All-Time Done</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-val" id="weekCount">0</span>
-                <span class="stat-lbl">Finished This Week</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-val" id="todayCount">0</span>
-                <span class="stat-lbl">Finished Today</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-val" id="onTimeScore">0%</span>
-                <span class="stat-lbl">% On Time</span>
-            </div>
-        </div>
-
-        <button class="reset-stats-btn" onclick="resetStats()">Reset All Stats</button>
-    </div>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <script src="script.js"></script>
-
 </body>
 </html>
