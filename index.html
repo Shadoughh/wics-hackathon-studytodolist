@@ -18,13 +18,13 @@
 
     <div class="input-group">
         <label>Task Name</label>
-        <input id="taskName" placeholder="What are we working on?">
+        <input id="taskName" placeholder="e.g., Study for Math Exam">
 
         <label>Due Date & Time</label>
         <input id="dueDate" type="datetime-local">
 
         <label>Priority / Difficulty (1-5)</label>
-        <input id="difficulty" type="number" min="1" max="5" placeholder="Optional (e.g. 3)">
+        <input id="difficulty" type="number" min="1" max="5" placeholder="Optional">
 
         <button id="addBtn" class="primary-btn" onclick="addTask()">Add Task</button>
         <button class="clear-btn" onclick="clearAllTasks()">Clear All Tasks</button>
@@ -34,43 +34,45 @@
 
     <div id="timerSetup" class="timer-card" style="display: none;">
         <h3 id="setupTaskName">Set Timer</h3>
-        <div class="timer-picker-horizontal">
-            <div class="picker-column">
+        <div class="timer-picker">
+            <div class="picker-group">
                 <button class="arrow-btn" onclick="adjustTime('min', 1)">▲</button>
                 <div id="setupMinutes" class="big-number">25</div>
                 <button class="arrow-btn" onclick="adjustTime('min', -1)">▼</button>
                 <span class="picker-label">MINS</span>
             </div>
+            
             <div class="picker-separator">:</div>
-            <div class="picker-column">
-                <div class="sec-arrows-row">
-                    <button class="small-arrow" onclick="adjustTime('sec', 10)">▲</button>
-                    <button class="small-arrow" onclick="adjustTime('sec', 1)">▲</button>
+            
+            <div class="picker-group">
+                <div class="dual-arrows">
+                    <button class="small-arrow" onclick="adjustTime('sec', 10)" title="+10s">▲</button>
+                    <button class="small-arrow" onclick="adjustTime('sec', 1)" title="+1s">▲</button>
                 </div>
                 <div id="setupSeconds" class="big-number">00</div>
-                <div class="sec-arrows-row">
-                    <button class="small-arrow" onclick="adjustTime('sec', -10)">▼</button>
-                    <button class="small-arrow" onclick="adjustTime('sec', -1)">▼</button>
+                <div class="dual-arrows">
+                    <button class="small-arrow" onclick="adjustTime('sec', -10)" title="-10s">▼</button>
+                    <button class="small-arrow" onclick="adjustTime('sec', -1)" title="-1s">▼</button>
                 </div>
                 <span class="picker-label">SECS</span>
             </div>
         </div>
-        <div class="timer-actions-row">
-            <button class="primary-btn pill-btn" onclick="confirmAndStart()">Start Timer</button>
-            <button class="cancel-btn pill-btn" onclick="stopTimer()">Cancel</button>
+        <div class="timer-actions">
+            <button class="primary-btn" onclick="confirmAndStart()">Start Timer</button>
+            <button class="clear-btn" onclick="stopTimer()" style="background:#cbd5e1; color:#475569; margin:0;">Cancel</button>
         </div>
     </div>
 
     <div id="activeTimerContainer" class="timer-card" style="display: none;">
         <h3 id="timerTaskName">Focusing...</h3>
-        <div id="timerDisplay" class="active-timer-display">25:00</div>
-        <div class="active-actions-row">
-            <button id="startPauseBtn" onclick="togglePause()" class="resume-pill">Pause</button>
-            <button onclick="stopTimer()" class="stop-pill">Stop</button>
+        <div id="timerDisplay">25:00</div>
+        <div class="timer-actions">
+            <button id="startPauseBtn" onclick="togglePause()" class="pause-btn">Pause</button>
+            <button onclick="stopTimer()" class="stop-btn">Stop</button>
         </div>
     </div>
 
-    <div class="sort-section">
+    <div class="sort-container">
         <label>Display Order</label>
         <select id="sortOption" onchange="renderTasks()">
             <option value="due">Sort by: Due Date</option>
@@ -80,30 +82,26 @@
     </div>
 
     <div class="stats-dashboard">
-        <div class="stat-box">
-            <span class="stat-num" id="statsToday">0</span>
-            <span class="stat-text">DONE TODAY</span>
+        <div class="stat-card">
+            <span class="stat-value" id="statsToday">0</span>
+            <span class="stat-label">DONE TODAY</span>
         </div>
-        <div class="stat-box">
-            <span class="stat-num" id="statsTotal">0</span>
-            <span class="stat-text">TOTAL DONE</span>
+        <div class="stat-card">
+            <span class="stat-value" id="statsTotal">0</span>
+            <span class="stat-label">TOTAL DONE</span>
         </div>
-        <div class="stat-box">
-            <span class="stat-num" id="statsOverdue" style="color: #e76f51;">0</span>
-            <span class="stat-text">OVERDUE</span>
+        <div class="stat-card">
+            <span class="stat-value" id="statsOverdue">0</span>
+            <span class="stat-label">OVERDUE</span>
         </div>
     </div>
 
-    <div class="progress-section">
-        <h2 class="section-title">Your Progress</h2>
-        <div class="progress-bg">
-            <div id="progressBar" class="progress-fill"></div>
-        </div>
-        <div class="progress-info">
-            <div id="progressText" class="progress-pct">0%</div>
-            <div id="taskCounter" class="progress-sub">0 / 0 Tasks Completed</div>
-        </div>
+    <h2 class="section-title">Your Progress</h2>
+    <div class="progress-container">
+        <div id="progressBar" class="progress-bar-fill"></div>
     </div>
+    <div id="progressText" class="progress-text">0%</div>
+    <div id="taskCounter" class="task-count-sub">0 / 0 Tasks Completed</div>
 
     <ul id="taskList"></ul>
 </div>

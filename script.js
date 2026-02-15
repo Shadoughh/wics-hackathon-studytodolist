@@ -1,8 +1,9 @@
 let tasks = JSON.parse(localStorage.getItem("studyTasks")) || [];
 let editIndex = null;
 let countdown;
-let isPaused = false;
+let timerRunning = false;
 let timeLeftInSeconds = 0;
+let isPaused = false;
 let currentFocusTask = "";
 
 let setupMins = 25;
@@ -52,18 +53,19 @@ function renderTasks() {
         const li = document.createElement("li");
         li.className = "task-item";
         li.innerHTML = `
-            <div style="display:flex; gap:15px; align-items:flex-start;">
-                <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask(${i})" style="width:20px; height:20px; cursor:pointer;">
-                <div>
+            <div class="task-main">
+                <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask(${i})">
+                <div class="task-info">
                     <strong style="${task.completed ? 'text-decoration:line-through;opacity:0.5' : ''}">${task.name}</strong>
-                    <div style="font-size:13px; opacity:0.7;">📅 ${new Date(task.due).toLocaleString()}</div>
-                    <div style="color:var(--green); font-weight:800; font-size:12px;">Difficulty: ${task.difficulty}</div>
+                    <small>📅 ${new Date(task.due).toLocaleString()}</small>
+                    ${isOverdue ? '<span class="overdue-tag">⚠️ Overdue!</span>' : ''}
+                    <span class="difficulty-tag">Difficulty: ${task.difficulty}</span>
                 </div>
             </div>
             <div class="task-actions">
-                <button class="primary-btn" onclick="startTimer('${task.name.replace(/'/g, "\\'")}')">⏱️ Timer</button>
-                <button style="background:#f59e0b; color:white;" onclick="editTask(${i})">Edit</button>
-                <button style="background:#ef4444; color:white;" onclick="deleteTask(${i})">Remove</button>
+                <button class="timer-btn" onclick="startTimer('${task.name.replace(/'/g, "\\'")}')">⏱️ Timer</button>
+                <button class="edit-btn" onclick="editTask(${i})">Edit</button>
+                <button class="del-btn" onclick="deleteTask(${i})">Remove</button>
             </div>
         `;
         list.appendChild(li);
@@ -82,16 +84,28 @@ function adjustTime(type, amount) {
     }
 }
 
+function editTask(index) {
+    editIndex = index;
+    const task = tasks[index];
+    document.getElementById("taskName").value = task.name;
+    document.getElementById("dueDate").value = task.due;
+    document.getElementById("difficulty").value = task.difficulty;
+    document.getElementById("addBtn").textContent = "Update Task";
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 function startTimer(taskName) {
+    if (timerRunning) return alert("Timer is already running!");
     currentFocusTask = taskName;
     document.getElementById("setupTaskName").textContent = "Timer: " + taskName;
     document.getElementById("timerSetup").style.display = "block";
-    window.scrollTo({ top: document.getElementById("timerSetup").offsetTop - 50, behavior: 'smooth' });
 }
 
 function confirmAndStart() {
     timeLeftInSeconds = (setupMins * 60) + setupSecs;
     if (timeLeftInSeconds <= 0) return alert("Please set a time!");
+    
+    timerRunning = true;
     isPaused = false;
     document.getElementById("timerSetup").style.display = "none";
     document.getElementById("activeTimerContainer").style.display = "block";
@@ -122,26 +136,29 @@ function togglePause() {
     isPaused = !isPaused;
     const btn = document.getElementById("startPauseBtn");
     btn.textContent = isPaused ? "Resume" : "Pause";
-    btn.style.backgroundColor = isPaused ? "#52b788" : "#f59e0b";
+    btn.style.background = isPaused ? "#10b981" : "#f59e0b";
 }
 
 function stopTimer() {
     clearInterval(countdown);
+    timerRunning = false;
     document.getElementById("activeTimerContainer").style.display = "none";
     document.getElementById("timerSetup").style.display = "none";
 }
 
-function editTask(i) {
-    editIndex = i;
-    const task = tasks[i];
-    document.getElementById("taskName").value = task.name;
-    document.getElementById("dueDate").value = task.due;
-    document.getElementById("difficulty").value = task.difficulty;
-    document.getElementById("addBtn").textContent = "Update Task";
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+// Confetti added here
+function toggleTask(i) { 
+    tasks[i].completed = !tasks[i].completed; 
+    if (tasks[i].completed) {
+        confetti({
+            particleCount: 150,
+            spread: 70,
+            origin: { y: 0.8 }
+        });
+    }
+    saveAndRender(); 
 }
 
-function toggleTask(i) { tasks[i].completed = !tasks[i].completed; saveAndRender(); }
 function deleteTask(i) { tasks.splice(i, 1); saveAndRender(); }
 function saveAndRender() { localStorage.setItem("studyTasks", JSON.stringify(tasks)); renderTasks(); }
 
